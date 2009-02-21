@@ -31,12 +31,9 @@ struct gc_heap {
 };
 
 #define TINY_HEAP_SIZE 0x4000
-#define BRKSIZE 4096
 #define PTRSIZE ((int) sizeof(void *))
 #define HEADER_SIZE ((int) sizeof(Header))
 #define Align(x,a) (((x) + (a - 1)) & ~(a - 1))
-#define NextSlot(p)     (* (void **) ((p) - PTRSIZE))
-#define NextFree(p)     (* (void **) (p))
 #define HEAP_LIMIT 10000
 
 static Header *free_list = NULL;
