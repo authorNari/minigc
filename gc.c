@@ -216,7 +216,8 @@ get_header(GC_Heap *gh, void *ptr)
 {
     Header *p, *pend, *pnext;
 
-    for (p = gh->slot, pend = (Header *)(((size_t)gh->slot) + gh->size); p < pend; p=pnext) {
+    pend = (Header *)(((size_t)gh->slot) + gh->size);
+    for (p = gh->slot; p < pend; p=pnext) {
         pnext = (Header *)(((size_t)(p+1)) + p->size);
         if ((void *)(p+1) <= ptr && ptr < (void *)pnext) {
             return p;
@@ -282,7 +283,8 @@ gc_sweep(void)
     Header *p, *pend, *pnext;
 
     for (i = 0; i < gc_heaps_used; i++) {
-        for (p = gc_heaps[i].slot, pend = (Header *)(((size_t)gc_heaps[i].slot) + gc_heaps[i].size); p < pend; p = pnext) {
+        pend = (Header *)(((size_t)gc_heaps[i].slot) + gc_heaps[i].size);
+        for (p = gc_heaps[i].slot; p < pend; p = pnext) {
             if (FL_TEST(p, FL_ALLOC)) {
                 if (FL_TEST(p, FL_MARK)) {
                     DEBUG(printf("mark unset : %p\n", p));
