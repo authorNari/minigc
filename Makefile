@@ -3,13 +3,16 @@ CC = gcc
 SRCS = gc.c
 BIN = gc
 
-all: test
-
-gc: $(SRCS)
-	$(CC) -g -o $@ $(SRCS)
-
-test: gc
-	./gc test
+all: clean gc
 
 clean:
 	rm -f gc
+
+gc: $(SRCS)
+	$(CC) -g -o gc $(SRCS)
+
+gc_debug:
+	$(CC) -g -DDO_DEBUG -o gc $(SRCS)
+
+test: clean gc_debug
+	./gc test
