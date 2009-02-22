@@ -1,0 +1,9 @@
+= mini gc
+
+= Description
+
+Simple and minimum gc. This project intend use teaching tools.
+
+= Algorithms
+
+* mark and sweep
