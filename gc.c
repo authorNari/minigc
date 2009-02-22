@@ -11,14 +11,12 @@
 #endif
 
 #include <stdio.h>
-#include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <assert.h>
 #include <unistd.h>
-
+#include "gc.h"
 
 /* =========================================================================== */
 /*  mini_gc_malloc                                                                */
@@ -52,9 +50,6 @@ static Header *free_list = NULL;
 static GC_Heap gc_heaps[HEAP_LIMIT];
 static size_t gc_heaps_used = 0;
 
-void mini_gc_free(void *ptr);
-void * mini_gc_malloc(size_t req_size);
-void garbage_collect(void);
 
 static Header *
 add_heap(size_t req_size)
@@ -321,7 +316,7 @@ set_using_stack(void)
 }
 
 void
-add_root(void * start, void * end)
+add_roots(void * start, void * end)
 {
     void *tmp;
     if (start > end) {
@@ -361,7 +356,7 @@ garbage_collect(void)
 /*  test                                                                       */
 /* =========================================================================== */
 
-void
+static void
 test_mini_gc_malloc_free(void)
 {
     char *p1, *p2, *p3;
@@ -391,7 +386,7 @@ test_mini_gc_malloc_free(void)
     mini_gc_free(p1);
 }
 
-void
+static void
 test_garbage_collect(void) {
     void *p;
     p = mini_gc_malloc(100);
@@ -400,7 +395,7 @@ test_garbage_collect(void) {
     garbage_collect();
 }
 
-void
+static void
 test_garbage_collect_load_test(void) {
     void *p;
     int i;
@@ -410,7 +405,7 @@ test_garbage_collect_load_test(void) {
     assert((((Header *)p)-1)->flags);
 }
 
-void
+static void
 test(void)
 {
     gc_init();
