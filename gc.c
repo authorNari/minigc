@@ -1,5 +1,3 @@
-// #define DO_DEBUG
-
 #ifdef DO_DEBUG
 #define DEBUG(exp) (exp)
 #else
@@ -36,8 +34,9 @@ typedef struct gc_heap {
 #define TINY_HEAP_SIZE 0x4000
 #define PTRSIZE ((size_t) sizeof(void *))
 #define HEADER_SIZE ((size_t) sizeof(Header))
-#define ALIGN(x,a) (((x) + (a - 1)) & ~(a - 1))
 #define HEAP_LIMIT 10000
+#define ALIGN(x,a) (((x) + (a - 1)) & ~(a - 1))
+#define NEXT_HEADER(x) ((Header *)((size_t)(x+1) + x->size))
 
 /* flags */
 #define FL_ALLOC 0x1
@@ -116,7 +115,7 @@ mini_gc_malloc(size_t req_size)
             else {
                 /* too big */
                 p->size -= (req_size + HEADER_SIZE);
-                p = (Header *)((size_t)(p+1) + p->size);
+                p = NEXT_HEADER(p);
                 p->size = req_size;
             }
             free_list = prevp;
@@ -148,7 +147,7 @@ mini_gc_free(void *ptr)
             (target > hit || target < hit->next_free))
             break;
 
-    if ((Header *)((size_t)(target+1) + target->size) == hit->next_free) {
+    if (NEXT_HEADER(target) == hit->next_free) {
         /* merge */
         target->size += (hit->next_free->size + HEADER_SIZE);
         target->next_free = hit->next_free->next_free;
@@ -157,7 +156,7 @@ mini_gc_free(void *ptr)
         /* join next free block */
         target->next_free = hit->next_free;
     }
-    if ((Header *)((size_t)(hit+1) + hit->size) == target) {
+    if (NEXT_HEADER(hit) == target) {
         /* merge */
         hit->size += (target->size + HEADER_SIZE);
         hit->next_free = target->next_free;
@@ -217,8 +216,8 @@ get_header(GC_Heap *gh, void *ptr)
     Header *p, *pend, *pnext;
 
     pend = (Header *)(((size_t)gh->slot) + gh->size);
-    for (p = gh->slot; p < pend; p=pnext) {
-        pnext = (Header *)(((size_t)(p+1)) + p->size);
+    for (p = gh->slot; p < pend; p = pnext) {
+        pnext = NEXT_HEADER(p);
         if ((void *)(p+1) <= ptr && ptr < (void *)pnext) {
             return p;
         }
@@ -263,7 +262,7 @@ gc_mark(void * ptr)
     DEBUG(printf("mark ptr : %p, header : %p\n", ptr, hdr));
 
     /* mark children */
-    gc_mark_range((char *)(hdr+1), (char *)(((size_t)(hdr+1))+hdr->size));
+    gc_mark_range((char *)(hdr+1), (char *)NEXT_HEADER(hdr));
 }
 
 static void
@@ -284,7 +283,7 @@ gc_sweep(void)
 
     for (i = 0; i < gc_heaps_used; i++) {
         pend = (Header *)(((size_t)gc_heaps[i].slot) + gc_heaps[i].size);
-        for (p = gc_heaps[i].slot; p < pend; p = pnext) {
+        for (p = gc_heaps[i].slot; p < pend; p = NEXT_HEADER(p)) {
             if (FL_TEST(p, FL_ALLOC)) {
                 if (FL_TEST(p, FL_MARK)) {
                     DEBUG(printf("mark unset : %p\n", p));
@@ -295,7 +294,6 @@ gc_sweep(void)
                     mini_gc_free(p+1);
                 }
             }
-            pnext = (Header *)(((size_t)(p+1)) + p->size);
         }
     }
 }
