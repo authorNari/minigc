@@ -14,11 +14,12 @@
 #include <errno.h>
 #include <assert.h>
 #include <unistd.h>
+#include <setjmp.h>
 #include "gc.h"
 
-/* =========================================================================== */
-/*  mini_gc_malloc                                                                */
-/* =========================================================================== */
+/* ========================================================================== */
+/*  mini_gc_malloc                                                            */
+/* ========================================================================== */
 
 typedef struct header {
     size_t flags;
@@ -172,9 +173,9 @@ mini_gc_free(void *ptr)
 
 
 
-/* =========================================================================== */
-/*  mini_gc                                                                    */
-/* =========================================================================== */
+/* ========================================================================== */
+/*  mini_gc                                                                   */
+/* ========================================================================== */
 
 struct root_range {
     char * start;
@@ -228,18 +229,33 @@ get_header(GC_Heap *gh, void *ptr)
 void
 gc_init(void)
 {
-    volatile long dummy, dummy1;
+    long dummy;
 
     /* referenced bdw-gc mark_rts.c */
     dummy = 42;
-    dummy1 = 42;
 
     /* check stack grow */
-    if (&dummy < &dummy1) {
-        stack_start = ((char *)&dummy)-1;
+    stack_start = ((char *)&dummy);
+}
+
+static void
+set_using_stack(void)
+{
+    char *tmp;
+    long dummy;
+
+    /* referenced bdw-gc mark_rts.c */
+    dummy = 42;
+
+    stack_end = (char *)&dummy;
+    if (stack_start > stack_end) {
+        tmp = stack_start;
+        stack_start = stack_end;
+        stack_start--;
+        stack_end = tmp;
     }
     else {
-        stack_start = ((char *)&dummy)+1;
+        stack_start++;
     }
 }
 
@@ -276,6 +292,25 @@ gc_mark_range(char *start, char *end)
 }
 
 static void
+gc_mark_register(void)
+{
+    jmp_buf env;
+    size_t i;
+    
+    setjmp(env);
+    for (i = 0; i < sizeof(env); i++) {
+        gc_mark(((void **)env)[i]);
+    }
+}
+
+static void
+gc_mark_stack(void)
+{
+    set_using_stack();
+    gc_mark_range(stack_start, stack_end);
+}
+
+static void
 gc_sweep(void)
 {
     size_t i;
@@ -290,28 +325,10 @@ gc_sweep(void)
                     FL_UNSET(p, FL_MARK);
                 }
                 else {
-                    DEBUG(printf("free objet : %p\n", p));
                     mini_gc_free(p+1);
                 }
             }
         }
-    }
-}
-
-static void
-set_using_stack(void)
-{
-    char *tmp;
-    volatile long dummy;
-
-    /* referenced bdw-gc mark_rts.c */
-    dummy = 42;
-
-    stack_end = (char *)&dummy;
-    if (stack_start > stack_end) {
-        tmp = stack_start;
-        stack_start = stack_end;
-        stack_end = tmp;
     }
 }
 
@@ -340,9 +357,11 @@ garbage_collect(void)
     size_t i;
     void *p;
 
-    /* marking */
-    set_using_stack();
-    gc_mark_range(stack_start, stack_end);
+    /* marking machine context */
+    gc_mark_register();
+    gc_mark_stack();
+
+    /* marking roots */
     for (i = 0; i < root_ranges_used; i++) {
         gc_mark_range(root_ranges[i].start, root_ranges[i].end);
     }
@@ -352,9 +371,9 @@ garbage_collect(void)
 }
 
 
-/* =========================================================================== */
-/*  test                                                                       */
-/* =========================================================================== */
+/* ========================================================================== */
+/*  test                                                                      */
+/* ========================================================================== */
 
 static void
 test_mini_gc_malloc_free(void)
