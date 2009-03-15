@@ -54,7 +54,7 @@ static size_t gc_heaps_used = 0;
 static Header *
 add_heap(size_t req_size)
 {
-    char *p;
+    void *p;
     Header *align_p;
 
     if (gc_heaps_used >= HEAP_LIMIT) {
@@ -65,7 +65,7 @@ add_heap(size_t req_size)
     if (req_size < TINY_HEAP_SIZE)
         req_size = TINY_HEAP_SIZE;
 
-    if((p = sbrk(req_size + PTRSIZE + HEADER_SIZE)) == (char *)-1)
+    if((p = sbrk(req_size + PTRSIZE + HEADER_SIZE)) == (void *)-1)
         return NULL;
 
     /* address alignment */
@@ -178,8 +178,8 @@ mini_gc_free(void *ptr)
 /* ========================================================================== */
 
 struct root_range {
-    char * start;
-    char * end;
+    void * start;
+    void * end;
 };
 
 #define IS_MARKED(x) (FL_TEST(x, FL_ALLOC) && FL_TEST(x, FL_MARK))
@@ -187,8 +187,8 @@ struct root_range {
 
 static struct root_range root_ranges[ROOT_RANGES_LIMIT];
 static size_t root_ranges_used = 0;
-static char * stack_start = NULL;
-static char * stack_end = NULL;
+static void * stack_start = NULL;
+static void * stack_end = NULL;
 static GC_Heap *hit_chach = NULL;
 
 static GC_Heap *
@@ -235,19 +235,19 @@ gc_init(void)
     dummy = 42;
 
     /* check stack grow */
-    stack_start = ((char *)&dummy);
+    stack_start = ((void *)&dummy);
 }
 
 static void
 set_using_stack(void)
 {
-    char *tmp;
+    void *tmp;
     long dummy;
 
     /* referenced bdw-gc mark_rts.c */
     dummy = 42;
 
-    stack_end = (char *)&dummy;
+    stack_end = (void *)&dummy;
     if (stack_start > stack_end) {
         tmp = stack_start;
         stack_start = stack_end;
@@ -259,7 +259,7 @@ set_using_stack(void)
     }
 }
 
-static void gc_mark_range(char *start, char *end);
+static void gc_mark_range(void *start, void *end);
 
 static void
 gc_mark(void * ptr)
@@ -278,16 +278,16 @@ gc_mark(void * ptr)
     DEBUG(printf("mark ptr : %p, header : %p\n", ptr, hdr));
 
     /* mark children */
-    gc_mark_range((char *)(hdr+1), (char *)NEXT_HEADER(hdr));
+    gc_mark_range((void *)(hdr+1), (void *)NEXT_HEADER(hdr));
 }
 
 static void
-gc_mark_range(char *start, char *end)
+gc_mark_range(void *start, void *end)
 {
-    char *p;
+    void *p;
 
     for (p = start; p < end; p++) {
-        gc_mark(*(char **)p);
+        gc_mark(*(void **)p);
     }
 }
 
@@ -341,8 +341,8 @@ add_roots(void * start, void * end)
         start = end;
         end = tmp;
     }
-    root_ranges[root_ranges_used].start = (char *)start;
-    root_ranges[root_ranges_used].end = (char *)end;
+    root_ranges[root_ranges_used].start = start;
+    root_ranges[root_ranges_used].end = end;
     root_ranges_used++;
 
     if (root_ranges_used >= ROOT_RANGES_LIMIT) {
@@ -378,13 +378,13 @@ garbage_collect(void)
 static void
 test_mini_gc_malloc_free(void)
 {
-    char *p1, *p2, *p3;
+    void *p1, *p2, *p3;
     size_t i;
 
     /* malloc check */
-    p1 = (char *)mini_gc_malloc(10);
-    p2 = (char *)mini_gc_malloc(10);
-    p3 = (char *)mini_gc_malloc(10);
+    p1 = (void *)mini_gc_malloc(10);
+    p2 = (void *)mini_gc_malloc(10);
+    p3 = (void *)mini_gc_malloc(10);
     assert(((Header *)p1-1)->size == ALIGN(10, PTRSIZE));
     assert(((Header *)p1-1)->flags == FL_ALLOC);
     assert((Header *)(((size_t)(free_list+1)) + free_list->size) == ((Header *)p3-1));
@@ -435,7 +435,7 @@ test(void)
 
 
 int
-main(int argc, char **argv)
+main(int argc, void **argv)
 {
     if (argc == 2 && strcmp(argv[1], "test") == 0)  test();
 }
