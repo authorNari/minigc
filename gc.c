@@ -46,7 +46,7 @@ typedef struct gc_heap {
 #define FL_UNSET(x, f) (((Header *)x)->flags &= ~(f))
 #define FL_TEST(x, f) (((Header *)x)->flags & f)
 
-static Header *free_list = NULL;
+static Header *free_list;
 static GC_Heap gc_heaps[HEAP_LIMIT];
 static size_t gc_heaps_used = 0;
 
