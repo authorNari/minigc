@@ -379,7 +379,6 @@ static void
 test_mini_gc_malloc_free(void)
 {
     void *p1, *p2, *p3;
-    size_t i;
 
     /* malloc check */
     p1 = (void *)mini_gc_malloc(10);
