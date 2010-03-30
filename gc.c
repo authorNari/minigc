@@ -355,7 +355,6 @@ void
 garbage_collect(void)
 {
     size_t i;
-    void *p;
 
     /* marking machine context */
     gc_mark_register();
