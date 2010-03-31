@@ -46,7 +46,7 @@ typedef struct gc_heap {
 #define FL_UNSET(x, f) (((Header *)x)->flags &= ~(f))
 #define FL_TEST(x, f) (((Header *)x)->flags & f)
 
-static Header *free_list = NULL;
+static Header *free_list;
 static GC_Heap gc_heaps[HEAP_LIMIT];
 static size_t gc_heaps_used = 0;
 
@@ -355,7 +355,6 @@ void
 garbage_collect(void)
 {
     size_t i;
-    void *p;
 
     /* marking machine context */
     gc_mark_register();
@@ -379,7 +378,6 @@ static void
 test_mini_gc_malloc_free(void)
 {
     void *p1, *p2, *p3;
-    size_t i;
 
     /* malloc check */
     p1 = (void *)mini_gc_malloc(10);

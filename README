@@ -2,8 +2,13 @@
 
 = Description
 
-Simple and minimum gc. This project intend use teaching tools.
+This is a simple and minimum GC. The purpose of this project is education.
 
 = Algorithms
 
 * mark and sweep
+
+= Usage
+
+    $ make
+    $ ./gc test
