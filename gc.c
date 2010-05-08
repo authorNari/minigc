@@ -189,22 +189,22 @@ static struct root_range root_ranges[ROOT_RANGES_LIMIT];
 static size_t root_ranges_used = 0;
 static void * stack_start = NULL;
 static void * stack_end = NULL;
-static GC_Heap *hit_chach = NULL;
+static GC_Heap *hit_cache = NULL;
 
 static GC_Heap *
 is_pointer_to_heap(void *ptr)
 {
     size_t i;
 
-    if (hit_chach &&
-        ((void *)hit_chach->slot) <= ptr &&
-        (size_t)ptr < (((size_t)hit_chach->slot) + hit_chach->size))
-        return hit_chach;
+    if (hit_cache &&
+        ((void *)hit_cache->slot) <= ptr &&
+        (size_t)ptr < (((size_t)hit_cache->slot) + hit_cache->size))
+        return hit_cache;
 
     for (i = 0; i < gc_heaps_used;  i++) {
         if ((((void *)gc_heaps[i].slot) <= ptr) &&
             ((size_t)ptr < (((size_t)gc_heaps[i].slot) + gc_heaps[i].size))) {
-            hit_chach = &gc_heaps[i];
+            hit_cache = &gc_heaps[i];
             return &gc_heaps[i];
         }
     }
