@@ -412,10 +412,11 @@ static void
 test_garbage_collect_load_test(void) {
     void *p;
     int i;
-    for (i = 0; i < 200; i++) {
-        p = mini_gc_malloc(1000000);
+    for (i = 0; i < 2000; i++) {
+        p = mini_gc_malloc(100);
     }
     assert((((Header *)p)-1)->flags);
+    assert(stack_end != stack_start);
 }
 
 static void
