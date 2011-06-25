@@ -248,15 +248,6 @@ set_using_stack(void)
     dummy = 42;
 
     stack_end = (void *)&dummy;
-    if (stack_start > stack_end) {
-        tmp = stack_start;
-        stack_start = stack_end;
-        stack_start--;
-        stack_end = tmp;
-    }
-    else {
-        stack_start++;
-    }
 }
 
 static void gc_mark_range(void *start, void *end);
@@ -307,7 +298,12 @@ static void
 gc_mark_stack(void)
 {
     set_using_stack();
-    gc_mark_range(stack_start, stack_end);
+    if (stack_start > stack_end) {
+        gc_mark_range(stack_end, stack_start);
+    }
+    else {
+        gc_mark_range(stack_start, stack_end);
+    }
 }
 
 static void
