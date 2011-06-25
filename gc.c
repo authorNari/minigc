@@ -239,7 +239,7 @@ gc_init(void)
 }
 
 static void
-set_using_stack(void)
+set_stack_end(void)
 {
     void *tmp;
     long dummy;
@@ -297,7 +297,7 @@ gc_mark_register(void)
 static void
 gc_mark_stack(void)
 {
-    set_using_stack();
+    set_stack_end();
     if (stack_start > stack_end) {
         gc_mark_range(stack_end, stack_start);
     }
