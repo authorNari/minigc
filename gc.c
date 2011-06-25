@@ -393,9 +393,9 @@ test_mini_gc_malloc_free(void)
     assert(((Header *)p1-1)->flags == 0);
 
     /* grow check */
-    p1 = mini_gc_malloc(TINY_HEAP_SIZE+100);
+    p1 = mini_gc_malloc(TINY_HEAP_SIZE+80);
     assert(gc_heaps_used == 2);
-    assert(gc_heaps[1].size == (TINY_HEAP_SIZE+100));
+    assert(gc_heaps[1].size == (TINY_HEAP_SIZE+80));
     mini_gc_free(p1);
 }
 
