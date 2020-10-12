@@ -202,8 +202,9 @@ is_pointer_to_heap(void *ptr)
         return hit_cache;
 
     for (i = 0; i < gc_heaps_used;  i++) {
+	//gc_heaps start:gc_heaps[i].slot    end: gc_heaps[i].slot + HEADER_SIZE + gc_heaps[i].size
         if ((((void *)gc_heaps[i].slot) <= ptr) &&
-            ((size_t)ptr < (((size_t)gc_heaps[i].slot) + gc_heaps[i].size))) {
+            ((size_t)ptr < (((size_t)gc_heaps[i].slot) + HEADER_SIZE + gc_heaps[i].size))) {
             hit_cache = &gc_heaps[i];
             return &gc_heaps[i];
         }
@@ -276,8 +277,9 @@ static void
 gc_mark_range(void *start, void *end)
 {
     void *p;
-
-    for (p = start; p < end; p++) {
+    //the first obj won't be mark if use del_reference [start]
+    gc_mark(start);
+    for (p = start + 1; p < end; p++) {
         gc_mark(*(void **)p);
     }
 }
